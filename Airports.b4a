@@ -1,0 +1,170 @@
+﻿Build1=Default,com.simplysoftware.airport
+File1=AirportInfo.bal
+File2=AirportInfo1.bal
+File3=airportinfo2.bal
+File4=Airports.db
+File5=MainCV.bal
+FileGroup1=Layouts
+FileGroup2=Default Group
+FileGroup3=Default Group
+FileGroup4=Database
+FileGroup5=Layouts
+Group=Default Group
+Library1=core
+Library2=xui
+Library3=xcustomlistview
+Library4=runtimepermissions
+Library5=sql
+ManifestCode='This code will be applied to the manifest file during compilation.~\n~'You do not need to modify it in most cases.~\n~'See this link for for more information: https://www.b4x.com/forum/showthread.php?p=78136~\n~AddManifestText(~\n~<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="29"/>~\n~<supports-screens android:largeScreens="true" ~\n~    android:normalScreens="true" ~\n~    android:smallScreens="true" ~\n~    android:anyDensity="true"/>)~\n~SetApplicationAttribute(android:icon, "@drawable/icon")~\n~SetApplicationAttribute(android:label, "$LABEL$")~\n~'End of default text.~\n~~\n~SetApplicationAttribute(android:largeHeap, "true")~\n~~\n~SetApplicationAttribute(android:theme, "@style/LightTheme")~\n~CreateResource(values, colors.xml,~\n~<resources>~\n~    <color name="actionbar">#ff4444</color>~\n~	<color name="statusbar">#ffcc0000</color>~\n~	<color name="textColorPrimary">#ffffffff</color>~\n~	<color name="navigationBar">#ffcc0000</color>~\n~</resources>~\n~)~\n~CreateResource(values-v20, theme.xml,~\n~<resources>~\n~    <style name="LightTheme" parent="@android:style/Theme.Material.Light">~\n~		 <item name="android:colorPrimary">@color/actionbar</item>~\n~		 <item name="android:colorPrimaryDark">@color/statusbar</item>~\n~		 <item name="android:textColorPrimary">@color/textColorPrimary</item>~\n~		 <item name="android:navigationBarColor">@color/navigationBar</item>~\n~    </style>~\n~</resources>~\n~)~\n~CreateResource(values-v14, theme.xml,~\n~<resources>~\n~    <style name="LightTheme" parent="@android:style/Theme.Holo.Light">~\n~		<item name="android:actionBarStyle">@style/CustomActionBarStyle</item>~\n~    </style>~\n~	<style name="CustomActionBarStyle" parent="@android:style/Widget.Holo.Light.ActionBar.Solid.Inverse">~\n~	    <item name="android:background">@color/actionbar</item>~\n~	</style>~\n~</resources>~\n~)~\n~~\n~~\n~
+Module1=Starter
+NumberOfFiles=5
+NumberOfLibraries=5
+NumberOfModules=1
+Version=11
+@EndOfDesignText@
+#Region  Project Attributes 
+	#ApplicationLabel: Airports
+	#VersionCode: 1
+	#VersionName: 1.0.0.0
+	
+	'SupportedOrientations possible values: unspecified, landscape or portrait.
+	#SupportedOrientations: portrait
+	#CanInstallToExternalStorage: False
+
+	#BridgeLogger: True
+#End Region
+
+#Region  Activity Attributes 
+	#FullScreen: False
+	#IncludeTitle: True
+#End Region
+
+#BridgeLogger: True
+
+Sub Process_Globals
+End Sub
+
+Sub Globals
+	'These global variables will be redeclared each time the activity is created.
+	'These variables can only be accessed from this module.
+
+	Private XUI As XUI
+	Private CS As CSBuilder
+
+'	Private PnlAirportInfo As B4XView
+	Private PnlAirportInfo1, PnlAirportInfo2 As B4XView
+	Private TxtSearchFilter As B4XView	
+	Private CLVAirports As CustomListView
+	Private LblName, LblAirportId, LblIATA, LblICAO, LblCity, LblAltitude, LblLongitude, LblLatitude As B4XView
+End Sub
+
+Sub Activity_Create(FirstTime As Boolean)
+	Activity.LoadLayout("MainCV")
+	TxtSearchFilter_TextChanged("", "")
+End Sub
+
+Sub Activity_Resume
+End Sub
+
+Sub Activity_Pause (UserClosed As Boolean)
+	TxtSearchFilter.Text = ""
+	CLVAirports.Clear
+End Sub
+
+Sub CLVAirports_VisibleRangeChanged (FirstIndex As Int, LastIndex As Int)
+	LogColor("FirstIndex: " & FirstIndex & CRLF & "LastIndex: " & LastIndex, Colors.Magenta)
+	Dim ExtraSize As Int = 25 'List size
+	For i = Max(0, FirstIndex - ExtraSize) To Min(LastIndex + ExtraSize, CLVAirports.Size - 1)
+		Dim Pnl As B4XView = CLVAirports.GetPanel(i)
+		If i > FirstIndex - ExtraSize And i < LastIndex + ExtraSize Then
+			If Pnl.NumberOfViews = 0 Then 'Add each item/layout to the list/main layout
+				
+				Select Pnl.Tag 
+					Case "header"
+						Dim country_1 As String = CLVAirports.GetValue(i)
+						Pnl.LoadLayout("airportinfo1")
+						LblName.Text = country_1
+					Case "item"
+						Dim AD As AirportData = CLVAirports.GetValue(i)
+						Pnl.LoadLayout("airportinfo2")
+						LblAirportId.Text = AD.AirportID
+						LblIATA.Text = AD.IATA
+						LblICAO.Text = AD.ICAO
+						LblCity.Text = AD.City
+						LblLatitude.Text = AD.Latitude
+						LblLongitude.Text = AD.Longitude
+						LblAltitude.Text = AD.Altitude
+					Case Else
+						Continue
+				End Select				
+			End If
+		Else 'Not visible
+			If Pnl.NumberOfViews > 0 Then
+				Pnl.RemoveAllViews 'Remove none visable item/layouts from the list/main layout
+			End If
+		End If
+	Next
+End Sub
+
+Sub CLVAirports_ItemClick (Index As Int, Value As Object)
+	If GetType(Value).Contains("airportdata") Then
+		'com.simplysoftware.airport.starter$_airportdata
+		Try
+			Dim AD As AirportData = Value 'AirportData is the custom type
+			Log(AD.Name)
+		Catch
+			Log(LastException)
+		End Try		
+	End If	
+End Sub
+
+Sub TxtSearchFilter_TextChanged (Old As String, New As String)
+	If New.Length = 1 Or New.Length = 2 Then Return
+	CLVAirports.Clear
+	Sleep(0)
+
+	Dim SenderFilter As Object
+	If New.Length = 0 Then
+		SenderFilter = Starter.sql.ExecQueryAsync("SQL", $"SELECT  * FROM airports order by `Country`,`City` ASC LIMIT 500;"$, Null)
+	Else
+		SenderFilter = Starter.sql.ExecQueryAsync("SQL", $"SELECT * FROM `airports` WHERE `Country` Like '%${New}%' ORDER BY `Country` ASC LIMIT 500;"$, Null) 'Limited for slower devices
+	End If
+
+	Wait For (SenderFilter) SQL_QueryComplete (Success As Boolean, RS As ResultSet)
+	If Success Then
+		Dim StartTime As Long = DateTime.Now
+		Dim idx As Int 
+		Dim currCountry As String = ""
+		Do While RS.NextRow
+			idx = idx + 1			
+			If currCountry <> RS.GetString("Country") Then
+				currCountry = RS.GetString("Country")
+				Dim PnlHeader As B4XView = XUI.CreatePanel("")
+				PnlHeader.Tag = "header"
+				'Dim Height As Int = 60dip
+				PnlHeader.SetLayoutAnimated(0, 0, 0, CLVAirports.AsView.Width, 65dip) 'Panel height + 4 for drop shadow
+				CLVAirports.Add(PnlHeader, idx & ". " & RS.GetString("Country"))
+			End If
+			Dim Ad As AirportData
+			Ad.Initialize
+			Ad.Name	= RS.GetString("Country")
+			Ad.AirportID = RS.GetString("Airport ID")
+			Ad.IATA	= RS.GetString("IATA")
+			Ad.ICAO	= RS.GetString("ICAO")
+			Ad.City	= RS.GetString("City")
+			Ad.Latitude	= RS.GetString("Latitude")
+			Ad.Longitude = RS.GetString("Longitude")
+			Ad.Altitude	= $"${RS.GetString("Altitude in feet")} ft"$				
+			Dim PnlItem As B4XView = XUI.CreatePanel("")
+			PnlItem.Tag = "item"
+			PnlItem.SetLayoutAnimated(0, 0, 0, CLVAirports.AsView.Width, 70dip) 'Panel height + 4 for drop shadow
+			CLVAirports.Add(PnlItem, Ad)
+		Loop
+		RS.Close		
+		Log($"List population time = ${NumberFormat2((DateTime.Now - StartTime) / 1000, 1, 2, 2, False)} seconds to populate ${CLVAirports.Size} airport names"$)
+	Else
+		Log(LastException)
+	End If	
+	'Add an icon to the activity text by using CSBuilder 
+	Activity.Title = CS.Initialize.Typeface(Typeface.FONTAWESOME).Append(Chr(0xF072)).Append($" ${CLVAirports.Size} Airports"$).PopAll
+End Sub
